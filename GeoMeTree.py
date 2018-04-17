@@ -13,6 +13,11 @@ import sys
 import math
 import time
 
+def err(*args, **kwargs):
+    # print executable name
+    print(*args, file=sys.stderr, **kwargs)
+    sys.exit(1)
+
 VERSION="v1.1"
 
 def parse_options():
@@ -578,6 +583,9 @@ def main():
     if opts.outfile=='None': outfile=None
     elif opts.outfile=='0': outfile=open(opts.infile+'.dist',"w")
     else: outfile=open(opts.outfile,'w')
+
+    if len(trees) < 2:
+        err("less than two trees given.")
 
     for i in range(0,len(trees)):
         for j in range(i+1,len(trees)):
