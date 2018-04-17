@@ -13,6 +13,7 @@ import sys
 import math
 import time
 
+VERSION="v1.1"
 
 def parse_options():
 
@@ -258,7 +259,7 @@ def distance(tree1,tree2,outfile):
     dec=1 #number of decomposition
 
     if outfile:
-        outfile.write("Output of GeoMeTree v1.0\n\n")
+        outfile.write("Output of GeoMeTree " + VERSION + "\n\n")
         outfile.write("2 Trees of %u taxa given:\n"%spp)
         outfile.write("T1=%s\nT2=%s\n" %(tree1,tree2))
         if opts.normalize:outfile.write("\nTree vectors have been normalized to norm 1 !!!\n")
