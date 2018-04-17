@@ -43,11 +43,11 @@ def parse_options():
     group=OptionGroup(parser,"Output options") 
     group.add_option("-m","--name",dest="outfile",default="None",help=SUPPRESS_HELP)#,help="Name of tabular output file, if 0: {file}.dist, default None"
     group.add_option("-s","--silent",dest="silent",help=SUPPRESS_HELP,action="store_true",default=False) #no pair file
-    group.add_option("-v","--header",dest="header",help="Header name of output file(s) (default: 'pair', then files pair_i_j are generated for each pair)",default="pair")
+    group.add_option("-v","--prefix",dest="prefix",help="Prefix name of output file(s) (default: 'pair', then files pair_i_j are generated for each pair)",default="pair")
     parser.add_option_group(group)
 
     (options, args) = parser.parse_args()
-    
+
     if not options.infile:
         print("\nName of infile required (option -f)\n")
         parser.print_help()
@@ -250,14 +250,14 @@ def distance(tree1,tree2,outfile):
     if opts.decomp:
         taxad,split_decomp=get_splits_with_decomposition(tree1,tree2,opts.term)
         if len(split_decomp)==1:
-            header=False
+            prefix=False
             spp=split_decomp[0][0][2]
         else:
-            header=True
+            prefix=True
             spp=get_splits(tree1,opts.term)[2]
     else:
         split_decomp=[[list(get_splits(tree1,opts.term)),list(get_splits(tree2,opts.term))]]
-        header=False
+        prefix=False
         spp=split_decomp[0][0][2]
         
     all_equs=[]
@@ -268,7 +268,7 @@ def distance(tree1,tree2,outfile):
         outfile.write("2 Trees of %u taxa given:\n"%spp)
         outfile.write("T1=%s\nT2=%s\n" %(tree1,tree2))
         if opts.normalize:outfile.write("\nTree vectors have been normalized to norm 1 !!!\n")
-        if header:
+        if prefix:
             outfile.write("\nTrees have been decomposed at common splits, the following dummy taxa are used:\n")
             for t in sorted(taxad.keys()):
                 outfile.write("%s\t%s\n" %(t,"*".join(taxad[t])))
@@ -325,30 +325,30 @@ def distance(tree1,tree2,outfile):
  
         if outfile:
             outfile.write("\n%s\n"%('-'*80))
-            if header:
+            if prefix:
                 outfile.write ("\nResults for Decomposition No. %u:\n" %dec)
 
             outfile.write("\nSplits only in T1:\n")
             for i in range(0,dim1):
                 splt=shorter_split(diff_splits[i])
-                if header:outfile.write("%u/"%dec)
+                if prefix:outfile.write("%u/"%dec)
                 outfile.write("%u\t%s\t%1.6f\n" %(i+1,splt,branch1_diff[i]))
 
             outfile.write("\nSplits only in T2:\n")
             for i in range(0,dim2):
                 splt=shorter_split(diff_splits[dim1+i])
-                if header:outfile.write("%u/"%dec)
+                if prefix:outfile.write("%u/"%dec)
                 outfile.write("%u\t%s\t%1.6f\n" %(i+dim1+1,splt,branch2_diff[i]))    
 
             outfile.write("\nSplits common to both trees and branch length in T1 and T2:\n")
             for i in range (0,c):
                 splt=shorter_split(shared_splits[i])
-                if header:outfile.write("%u/"%dec)
+                if prefix:outfile.write("%u/"%dec)
                 outfile.write("%u\t%s\t%1.6f\t%1.6f\n" %(i+dim1+dim2+1,splt,branch1_shared[i],branch2_shared[i]))
                 
         # =============================================================================== #
         # fill bl_dics
-        if header:
+        if prefix:
             for i in range(0,dim1):
                 bl_dic1["%u/%u"%(dec,i+1)]=branch1_diff[i]
                 bl_dic2["%u/%u"%(dec,i+1)]=0
@@ -464,7 +464,7 @@ def distance(tree1,tree2,outfile):
                     s=[0,1]
                 if r_ind: R[0]+=[i+dim1+1 for i in r_ind]
                 if l_ind: L[-1]+=[i+1 for i in l_ind]    
-                if header:
+                if prefix:
                     L=[["%u/%u"%(dec,i) for i in l] for l in L]
                     R=[["%u/%u"%(dec,i) for i in r] for r in R]
  
@@ -486,7 +486,7 @@ def distance(tree1,tree2,outfile):
                 if outfile:
                     outfile.write("\nThe geodesic path:\n")
                     outfile.write(path_to_str(s,L,R))
-                    if header:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2,dec))
+                    if prefix:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2,dec))
                     else:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2))
                     outfile.write("\nResults for the different splits:\n")
                     outfile.write("Branch score %1.6f\nGeodesic distance %1.6f\nCone distance %1.6f\n" %(bs,sum(dist),ub))
@@ -504,7 +504,7 @@ def distance(tree1,tree2,outfile):
             new_s_dic[1]=[[],[]]
             if outfile:
                 outfile.write("\nThe geodesic path:\nThere are no different splits, it equals the branch score.\n")
-                if header:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2,dec))
+                if prefix:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2,dec))
                 else:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2)) 
 
         # =============================================================================== #
@@ -548,7 +548,7 @@ def distance(tree1,tree2,outfile):
     #===============================================================================#
     #output in case of decompositions
 
-    if header:
+    if prefix:
         for i in list(len_dic.keys()):
             len_dic[i]=norm(len_dic[i])
         outstring2=("%u\t"*5+"%1.6f\t"*7) %(spp,split_dic["shared"],split_dic["diff1"],split_dic["diff2"],split_dic["dim"],len_dic["bs"],len_dic["cone"],len_dic["geod"],len_dic["bsall"],len_dic["coneall"],len_dic["geodall"],compl_time)
@@ -590,7 +590,7 @@ def main():
     for i in range(0,len(trees)):
         for j in range(i+1,len(trees)):
             if opts.silent: actpair=None
-            else: actpair=open("%s_%u_%u" %(opts.header,i+1,j+1),"w")
+            else: actpair=open("%s_%u_%u" %(opts.prefix,i+1,j+1),"w")
             outstr=distance(trees[i][:-1],trees[j][:-1],actpair)
             if outfile: outfile.write("%u\t%u\t%s\n"%(i+1,j+1,outstr))
             if actpair: actpair.close()
