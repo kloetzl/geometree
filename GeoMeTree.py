@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 #2008-10-03 exception introduced when too many internal splits, but still error when decomposition is applied
 
