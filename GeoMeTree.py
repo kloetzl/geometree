@@ -34,6 +34,7 @@ def parse_options():
     parser.add_option_group(group)
 
     group=OptionGroup(parser,"Algorithmic options")
+    group.add_option("-c","--cone",dest="cone",help="Compute only the cone distance",action="store_true",default=False)
     group.add_option("-o","--opt",dest="opt",action="store_false",default=True,help=SUPPRESS_HELP) #help="Turn off optimization (default: with optimization)"
     group.add_option("-g","--graph",dest="graph",help=SUPPRESS_HELP,action="store_false",default=True) #help="Turn off evaluation of complete graph (default: on)"
     group.add_option("-a","--approx",dest="approx",help="Compute only the approximations, not geodesic path",action="store_true",default=False)
@@ -573,6 +574,32 @@ def distance(tree1,tree2,outfile):
             if not opts.approx:outfile.write("\nComputation time for all geodesic paths: %1.4f s\n"%(compl_time))
     return outstring
 
+
+def full_cone(tree1,tree2):
+    global opts
+
+    def combine(diff,shared,splits1,bl1,dstart,dend): #combine branch length lists so that indicees correspond to splits
+        shared_branch=[bl1[splits1.index(s)] for s in shared]
+        diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
+        return diff_branch,shared_branch
+
+    splits1,bl1,spp1=list(get_splits(tree1,opts.term))
+    splits2,bl2,spp2=list(get_splits(tree2,opts.term))
+
+    # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
+
+    diff_splits,adj,dim1,dim2=get_split_representation(splits1,splits2)
+
+    shared_splits=list(set(splits1).intersection(set(splits2)))
+    shared_splits.sort()
+
+    # combine branch length lists so that indices correspond to splits
+
+    branch1_diff,branch1_shared=combine(diff_splits,shared_splits,splits1,bl1,0,dim1)
+    branch2_diff,branch2_shared=combine(diff_splits,shared_splits,splits2,bl2,dim1,dim1+dim2)
+
+    return cone(branch1_diff,branch2_diff,branch1_shared,branch2_shared)
+
 #===============================================================================#
 
 def main():
@@ -586,6 +613,16 @@ def main():
 
     if len(trees) < 2:
         err("less than two trees given.")
+
+    if opts.cone and len(trees) != 2:
+        err("panix!")
+
+    if opts.cone and len(trees) == 2:
+        d=full_cone(trees[0],trees[1]);
+        print(d)
+        sys.exit(0)
+
+    # fallback to old interface
 
     for i in range(0,len(trees)):
         for j in range(i+1,len(trees)):
