@@ -45,7 +45,7 @@ def parse_options():
     if not options.infile:
         print("\nName of infile required (option -f)\n")
         parser.print_help()
-        sys.exit(0)
+        sys.exit(1)
 
     if options.approx:options.graph=False #suppresses output for graph
         
