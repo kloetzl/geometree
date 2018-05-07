@@ -36,6 +36,7 @@ def parse_options():
     group=OptionGroup(parser,"Algorithmic options")
     group.add_option("-b","--branch",dest="branch",help="Compute only the branch score",action="store_true",default=False)
     group.add_option("-c","--cone",dest="cone",help="Compute only the cone distance",action="store_true",default=False)
+    group.add_option("--symmetric",dest="symmetric",help="Compute only the symmetric distance",action="store_true",default=False)
     group.add_option("-o","--opt",dest="opt",action="store_false",default=True,help=SUPPRESS_HELP) #help="Turn off optimization (default: with optimization)"
     group.add_option("-g","--graph",dest="graph",help=SUPPRESS_HELP,action="store_false",default=True) #help="Turn off evaluation of complete graph (default: on)"
     group.add_option("-a","--approx",dest="approx",help="Compute only the approximations, not geodesic path",action="store_true",default=False)
@@ -631,6 +632,17 @@ def branch(tree1,tree2):
     shared=[shared1[i]-shared2[i] for i in range(0,len(shared1))]
     return norm(diff1+diff2+shared)
 
+def symmetric(tree1,tree2):
+    global opts
+
+    splits1,bl1,spp1=list(get_splits(tree1,opts.term))
+    splits2,bl2,spp2=list(get_splits(tree2,opts.term))
+
+    # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
+
+    diff_splits,adj,dim1,dim2=get_split_representation(splits1,splits2)
+    return len(diff_splits);
+
 
 #===============================================================================#
 
@@ -656,6 +668,11 @@ def main():
 
     if opts.branch and len(trees) == 2:
         d=branch(trees[0],trees[1]);
+        print(d)
+        sys.exit(0)
+
+    if opts.symmetric and len(trees) == 2:
+        d=symmetric(trees[0],trees[1]);
         print(d)
         sys.exit(0)
 
