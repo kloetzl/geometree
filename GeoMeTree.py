@@ -131,6 +131,10 @@ def get_split_representation(splits1,splits2): #extract splits only in one tree 
 def geodesic(adj,bl1,bl2,neg,todo): #returns the last orthant
     global opts
 
+    def cone(diff1,diff2,shared1=[],shared2=[]):
+        sharednorm=snorm([shared1[i]-shared2[i] for i in range(0,len(shared1))])
+        return math.sqrt((norm(diff1)+norm(diff2))**2+sharednorm)
+
     bestp=[None]
     mind=[cone(bl1,bl2)+1]
     countp=[0]
