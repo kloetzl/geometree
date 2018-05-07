@@ -14,11 +14,11 @@ import math
 import time
 
 def err(*args, **kwargs):
-    # print executable name
+    # TODO: print executable name
     print(*args, file=sys.stderr, **kwargs)
     sys.exit(1)
 
-VERSION="v1.1"
+VERSION="v1.1.fk1"
 
 def parse_options():
 
@@ -71,11 +71,11 @@ def get_splits(newick_string,term=False): #if term: append also terminal splits 
 
 def get_splits_with_decomposition(newick1,newick2,term=False): #if term: append also terminal splits and branch lengths
     global opts
-    
+
     root1=parse_newick(newick1)
     root2=parse_newick(newick2)
 
-    
+
     taxad,decomp=root1.decomposition(root2) #returns taxa-dictionary of dummy taxa and decompositions as pairs of root nodes
 
     all_splits=[] #stores pairs of subtrees to be compared
