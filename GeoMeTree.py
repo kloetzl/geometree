@@ -29,19 +29,17 @@ def parse_options():
 
     from optparse import OptionParser, OptionGroup, SUPPRESS_HELP
     parser = OptionParser()
-    group=OptionGroup(parser,"Input options")
-    group.add_option("-f", "--file", dest="infile", help="Name of input file", default=None)
-    parser.add_option_group(group)
+    parser.add_option("-f", "--file", dest="infile", help="Name of input file", default=None)
 
-    group=OptionGroup(parser,"Tree length options")
-    group.add_option("-n", "--norm", dest="normalize",help="Normalize the branch length vectors to norm 1 (default: no normalization)",action="store_true",default=False)
-    group.add_option("-t", "--term",dest="term",help="Ignore branch lengths of terminal splits (then also ignored in normalization, default: terminal branch lengths considered)",action="store_false",default=True)
-    parser.add_option_group(group)
+    # group=OptionGroup(parser,"Tree length options")
+    # group.add_option("-n", "--norm", dest="normalize",help="Normalize the branch length vectors to norm 1 (default: no normalization)",action="store_true",default=False)
+    # group.add_option("-t", "--term",dest="term",help="Ignore branch lengths of terminal splits (then also ignored in normalization, default: terminal branch lengths considered)",action="store_false",default=True)
+    # parser.add_option_group(group)
 
-    group=OptionGroup(parser,"Algorithmic options")
-    group.add_option("-b","--branch",dest="branch",help="Compute only the branch score",action="store_true",default=False)
-    group.add_option("-c","--cone",dest="cone",help="Compute only the cone distance",action="store_true",default=False)
-    group.add_option("--symmetric",dest="symmetric",help="Compute only the symmetric distance",action="store_true",default=False)
+    group=OptionGroup(parser,"Algorithmic options (pick one)")
+    group.add_option("-b","--branch",dest="branch",help="Compute the branch score",action="store_true",default=False)
+    group.add_option("-c","--cone",dest="cone",help="Compute the cone distance",action="store_true",default=False)
+    group.add_option("-s", "--symmetric",dest="symmetric",help="Compute the symmetric distance",action="store_true",default=False)
     # group.add_option("-o","--opt",dest="opt",action="store_false",default=True,help=SUPPRESS_HELP) #help="Turn off optimization (default: with optimization)"
     # group.add_option("-g","--graph",dest="graph",help=SUPPRESS_HELP,action="store_false",default=True) #help="Turn off evaluation of complete graph (default: on)"
     # group.add_option("-a","--approx",dest="approx",help="Compute only the approximations, not geodesic path",action="store_true",default=False)
@@ -598,8 +596,8 @@ def full_cone(tree1,tree2):
         diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
         return diff_branch,shared_branch
 
-    splits1,bl1,spp1=list(get_splits(tree1,opts.term))
-    splits2,bl2,spp2=list(get_splits(tree2,opts.term))
+    splits1,bl1,spp1=list(get_splits(tree1, True))
+    splits2,bl2,spp2=list(get_splits(tree2, True))
 
     # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
 
