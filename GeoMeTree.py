@@ -9,12 +9,17 @@ from Graph import *
 # external libraries
 from string import *
 from copy import *
-import sys
 import math
+import os
+import sys
 import time
 
+def warnx(*args, **kwargs):
+    sys.stderr.write("%s: " % os.path.basename(sys.argv[0]))
+    print(*args, file=sys.stderr, **kwargs)
+
 def err(*args, **kwargs):
-    # TODO: print executable name
+    sys.stderr.write("%s: " % os.path.basename(sys.argv[0]))
     print(*args, file=sys.stderr, **kwargs)
     sys.exit(1)
 
@@ -28,7 +33,7 @@ def parse_options():
     group.add_option("-f", "--file", dest="infile", help="Name of input file", default=None)
     parser.add_option_group(group)
 
-    group=OptionGroup(parser,"Tree lengths options")
+    group=OptionGroup(parser,"Tree length options")
     group.add_option("-n", "--norm", dest="normalize",help="Normalize the branch length vectors to norm 1 (default: no normalization)",action="store_true",default=False)
     group.add_option("-t", "--term",dest="term",help="Ignore branch lengths of terminal splits (then also ignored in normalization, default: terminal branch lengths considered)",action="store_false",default=True)
     parser.add_option_group(group)
@@ -55,7 +60,7 @@ def parse_options():
         if not sys.stdin.isatty():
             options.infile = "-"
         else:
-            print("\nName of infile required (option -f)\n")
+            warnx("Name of infile required")
             parser.print_help()
             sys.exit(1)
 
