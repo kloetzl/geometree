@@ -25,7 +25,7 @@ def parse_options():
     from optparse import OptionParser, OptionGroup, SUPPRESS_HELP
     parser = OptionParser()
     group=OptionGroup(parser,"Input options")
-    group.add_option("-f", "--file", dest="infile", help="Name of input file, all pairs of trees in the file are evaluated (no default!)",default=None)
+    group.add_option("-f", "--file", dest="infile", help="Name of input file", default=None)
     parser.add_option_group(group)
 
     group=OptionGroup(parser,"Tree lengths options")
@@ -52,9 +52,12 @@ def parse_options():
     (options, args) = parser.parse_args()
 
     if not options.infile:
-        print("\nName of infile required (option -f)\n")
-        parser.print_help()
-        sys.exit(1)
+        if not sys.stdin.isatty():
+            options.infile = "-"
+        else:
+            print("\nName of infile required (option -f)\n")
+            parser.print_help()
+            sys.exit(1)
 
     if options.approx:options.graph=False #suppresses output for graph
         
@@ -649,7 +652,10 @@ def symmetric(tree1,tree2):
 def main():
     global opts
     opts=parse_options()
-    trees=open(opts.infile).readlines()
+    if opts.infile != "-":
+        trees = open(opts.infile).readlines()
+    else:
+        trees = sys.stdin.readlines()
 
     if opts.outfile=='None': outfile=None
     elif opts.outfile=='0': outfile=open(opts.infile+'.dist',"w")
