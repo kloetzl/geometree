@@ -42,17 +42,17 @@ def parse_options():
     group.add_option("-b","--branch",dest="branch",help="Compute only the branch score",action="store_true",default=False)
     group.add_option("-c","--cone",dest="cone",help="Compute only the cone distance",action="store_true",default=False)
     group.add_option("--symmetric",dest="symmetric",help="Compute only the symmetric distance",action="store_true",default=False)
-    group.add_option("-o","--opt",dest="opt",action="store_false",default=True,help=SUPPRESS_HELP) #help="Turn off optimization (default: with optimization)"
-    group.add_option("-g","--graph",dest="graph",help=SUPPRESS_HELP,action="store_false",default=True) #help="Turn off evaluation of complete graph (default: on)"
-    group.add_option("-a","--approx",dest="approx",help="Compute only the approximations, not geodesic path",action="store_true",default=False)
-    group.add_option("-d","--decomp",dest="decomp",help="Do not decompose the trees (default: decomposition when possible)",action="store_false",default=True)
+    # group.add_option("-o","--opt",dest="opt",action="store_false",default=True,help=SUPPRESS_HELP) #help="Turn off optimization (default: with optimization)"
+    # group.add_option("-g","--graph",dest="graph",help=SUPPRESS_HELP,action="store_false",default=True) #help="Turn off evaluation of complete graph (default: on)"
+    # group.add_option("-a","--approx",dest="approx",help="Compute only the approximations, not geodesic path",action="store_true",default=False)
+    # group.add_option("-d","--decomp",dest="decomp",help="Do not decompose the trees (default: decomposition when possible)",action="store_false",default=True)
     parser.add_option_group(group)
 
-    group=OptionGroup(parser,"Output options") 
-    group.add_option("-m","--name",dest="outfile",default="None",help=SUPPRESS_HELP)#,help="Name of tabular output file, if 0: {file}.dist, default None"
-    group.add_option("-s","--silent",dest="silent",help=SUPPRESS_HELP,action="store_true",default=False) #no pair file
-    group.add_option("-v","--prefix",dest="prefix",help="Prefix name of output file(s) (default: 'pair', then files pair_i_j are generated for each pair)",default="pair")
-    parser.add_option_group(group)
+    # group=OptionGroup(parser,"Output options")
+    # group.add_option("-m","--name",dest="outfile",default="None",help=SUPPRESS_HELP)#,help="Name of tabular output file, if 0: {file}.dist, default None"
+    # group.add_option("-s","--silent",dest="silent",help=SUPPRESS_HELP,action="store_true",default=False) #no pair file
+    # group.add_option("-v","--prefix",dest="prefix",help="Prefix name of output file(s) (default: 'pair', then files pair_i_j are generated for each pair)",default="pair")
+    # parser.add_option_group(group)
 
     (options, args) = parser.parse_args()
 
@@ -64,7 +64,7 @@ def parse_options():
             parser.print_help()
             sys.exit(1)
 
-    if options.approx:options.graph=False #suppresses output for graph
+    # if options.approx:options.graph=False #suppresses output for graph
         
     return options
 
@@ -626,8 +626,8 @@ def branch(tree1,tree2):
         diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
         return diff_branch,shared_branch
 
-    splits1,bl1,spp1=list(get_splits(tree1,opts.term))
-    splits2,bl2,spp2=list(get_splits(tree2,opts.term))
+    splits1,bl1,spp1=list(get_splits(tree1, True))
+    splits2,bl2,spp2=list(get_splits(tree2, True))
 
     # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
 
@@ -647,8 +647,8 @@ def branch(tree1,tree2):
 def symmetric(tree1,tree2):
     global opts
 
-    splits1,bl1,spp1=list(get_splits(tree1,opts.term))
-    splits2,bl2,spp2=list(get_splits(tree2,opts.term))
+    splits1,bl1,spp1=list(get_splits(tree1, True))
+    splits2,bl2,spp2=list(get_splits(tree2, True))
 
     # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
 
@@ -666,40 +666,30 @@ def main():
     else:
         trees = sys.stdin.readlines()
 
-    if opts.outfile=='None': outfile=None
-    elif opts.outfile=='0': outfile=open(opts.infile+'.dist',"w")
-    else: outfile=open(opts.outfile,'w')
-
     if len(trees) < 2:
-        err("less than two trees given.")
+        err("less than two trees given")
 
-    if (opts.cone or opts.branch) and len(trees) != 2:
-        err("panix!")
+    if len(trees) > 2:
+        warnx("limiting computation to first two trees")
+        trees = trees[0:2]
 
-    if opts.cone and len(trees) == 2:
+    if opts.cone:
         d=full_cone(trees[0],trees[1]);
         print(d)
         sys.exit(0)
 
-    if opts.branch and len(trees) == 2:
+    if opts.branch:
+        # unrooted
         d=branch(trees[0],trees[1]);
         print(d)
         sys.exit(0)
 
-    if opts.symmetric and len(trees) == 2:
+    if opts.symmetric:
+        # unrooted
         d=symmetric(trees[0],trees[1]);
         print(d)
         sys.exit(0)
 
-    # fallback to old interface
-
-    for i in range(0,len(trees)):
-        for j in range(i+1,len(trees)):
-            if opts.silent: actpair=None
-            else: actpair=open("%s_%u_%u" %(opts.prefix,i+1,j+1),"w")
-            outstr=distance(trees[i][:-1],trees[j][:-1],actpair)
-            if outfile: outfile.write("%u\t%u\t%s\n"%(i+1,j+1,outstr))
-            if actpair: actpair.close()
-    if outfile: outfile.close()
+    err("unknown call")
     
 if __name__ == "__main__":main()
