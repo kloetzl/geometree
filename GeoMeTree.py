@@ -25,10 +25,29 @@ def err(*args, **kwargs):
 
 VERSION="v1.1.fk1"
 
+def version():
+    text="""%s %s
+
+Copyright (C) 2009  Anne Kupczok, Arndt von Haeseler and Steffen Klaere
+Copyright (C) 2018  Fabian Klötzl <kloetzl@evolbio.mpg.de>
+
+This is a heavily modified version of the original GeoMeTree by the authors given above.
+The same license (GPL-2+) applies.
+
+This program is free software; you can redistribute it and/or modify it under the terms of
+the GNU General Public License as published by the Free Software Foundation; either version
+2 of the License, or (at your option) any later version. This program is distributed in the hope
+that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+Public License for more details."""
+    print(text % (os.path.basename(sys.argv[0]), VERSION));
+    sys.exit(0)
+
 def parse_options():
 
     from optparse import OptionParser, OptionGroup, SUPPRESS_HELP
     parser = OptionParser()
+    parser.add_option("--version", dest="version", help="Print version information", action="store_true", default=False)
     parser.add_option("-f", "--file", dest="infile", help="Name of input file", default=None)
 
     # group=OptionGroup(parser,"Tree length options")
@@ -53,6 +72,9 @@ def parse_options():
     # parser.add_option_group(group)
 
     (options, args) = parser.parse_args()
+
+    if options.version:
+        version()
 
     if not options.infile:
         if not sys.stdin.isatty():
