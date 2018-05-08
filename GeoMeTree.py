@@ -209,7 +209,7 @@ def geodesic(adj,bl1,bl2,neg,todo): #returns the last orthant
             if not oldorth: #generate orthant where the edge points to
                 neworth=newedge.create_orthant()
                 succ=newedge.compute_s(bl1,bl2,neworth)
-                if succ: Orthant.OrthList[oid]=neworth #may be not successfull, because transition times have to fullfill several constraints
+                if succ: Orthant.OrthList[oid]=neworth #may be not successful, because transition times have to fullfill several constraints
                 else:
                     del newedge
                     del neworth
@@ -234,7 +234,8 @@ def geodesic(adj,bl1,bl2,neg,todo): #returns the last orthant
 
 def distance(tree1,tree2):
 
-    def combine(diff,shared,splits1,bl1,dstart,dend): #combine branch length lists so that indicees correspond to splits
+    def combine(diff,shared,splits1,bl1,dstart,dend):
+        #combine branch length lists so that indices correspond to splits
         shared_branch=[bl1[splits1.index(s)] for s in shared]
         diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
         return diff_branch,shared_branch
@@ -248,7 +249,6 @@ def distance(tree1,tree2):
     def inverse(mat):
         return [[mat[i][j] for i in range(0,len(mat))] for j in range(0,len(mat[0]))]
 
-    #================================================================================#  
 
     split_decomp=[[list(get_splits(tree1)),list(get_splits(tree2))]]
     for t1,t2 in split_decomp:
@@ -257,7 +257,6 @@ def distance(tree1,tree2):
     splits1,bl1,spp1=t1
     splits2,bl2,spp2=t2
 
-    # =============================================================================== #
     # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
 
     diff_splits,adj,dim1,dim2=get_split_representation(splits1,splits2)
@@ -265,7 +264,6 @@ def distance(tree1,tree2):
     shared_splits=list(set(splits1).intersection(set(splits2)))
     shared_splits.sort()
 
-    # =============================================================================== #
     # combine branch length lists so that indices correspond to splits
 
     branch1_diff,branch1_shared=combine(diff_splits,shared_splits,splits1,bl1,0,dim1)
@@ -277,11 +275,10 @@ def distance(tree1,tree2):
         dl = dist_for_geod(equ_r+create_shared_equ(branch1_shared,branch2_shared),equ_l)
         return sum(dl)
 
-    # =============================================================================== #
     # find splits that are compatible to all others
 
     l_ind=[]
-    #There may be some splits in the first tree that are compatible to all splits in the second tree -> they have to end at 1
+    # There may be some splits in the first tree that are compatible to all splits in the second tree -> they have to end at 1
     for i in range(0,dim1):
         if adj[i]==[True]*dim2: # all()?
             l_ind.append(i)
@@ -289,7 +286,7 @@ def distance(tree1,tree2):
     neg=set(range(0,dim1)).difference(set(l_ind))  #neg is the starting neg for the geodesic algorithm, in case of full compatibilities, some are excluded
 
     r_ind=[]
-    #vice versa
+    # vice versa
     for j in range(0,dim2):
         comp=True
         for i in range(0,dim1):
@@ -300,14 +297,12 @@ def distance(tree1,tree2):
     comp_equ_r=[[0,branch2_diff[i],0] for i in r_ind]
     todo=set(range(0,dim2)).difference(set(r_ind))        
 
-    # =============================================================================== #
     # geodesic distance algorithm if still something todo
 
     equ_l=[]
     equ_r=[]
-    if len(todo)>0: #it may be that all were compatible bec of polytomies
+    if len(todo) > 0: #it may be that all were compatible because of polytomies
 
-        # =============================================================================== #
         # todo should be the smaller set since algorithm is exponential in len(todo)
         swap=(len(neg)<len(todo))
         if swap:
@@ -320,12 +315,12 @@ def distance(tree1,tree2):
         except OverflowError:
             err("Too many splits in actual decomposition to compute the geodesic distance exactly:", Orthant.dim2)
 
-        equ_l,equ_r= path.equations(branch1_diff,branch2_diff) #the assignment to first and second tree is not correct, but changes nothing for distance computation!!!
+        #the assignment to first and second tree is not correct, but changes nothing for distance computation!!!
+        equ_l,equ_r= path.equations(branch1_diff,branch2_diff)
 
     equ_l += comp_equ_l
     equ_r += comp_equ_r
 
-    # =============================================================================== #
     # Compute the distances for all splits and output them
 
     dist_compl=dist_for_geod(equ_r+create_shared_equ(branch1_shared,branch2_shared),equ_l)
@@ -336,7 +331,7 @@ def distance(tree1,tree2):
 
 def full_cone(tree1,tree2):
     def combine(diff,shared,splits1,bl1,dstart,dend):
-        #combine branch length lists so that indicees correspond to splits
+        #combine branch length lists so that indices correspond to splits
         shared_branch=[bl1[splits1.index(s)] for s in shared]
         diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
         return diff_branch,shared_branch
@@ -362,7 +357,7 @@ def full_cone(tree1,tree2):
 
 def branch(tree1,tree2):
     def combine(diff,shared,splits1,bl1,dstart,dend):
-        #combine branch length lists so that indicees correspond to splits
+        #combine branch length lists so that indices correspond to splits
         shared_branch=[bl1[splits1.index(s)] for s in shared]
         diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
         return diff_branch,shared_branch
@@ -437,4 +432,5 @@ def main():
 
     err("unknown call")
     
-if __name__ == "__main__":main()
+if __name__ == "__main__":
+    main()
