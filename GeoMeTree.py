@@ -31,16 +31,17 @@ def version():
 Copyright (C) 2009  Anne Kupczok, Arndt von Haeseler and Steffen Klaere
 Copyright (C) 2018  Fabian Klötzl <kloetzl@evolbio.mpg.de>
 
-This is a heavily modified version of the original GeoMeTree by the authors given above.
-The same license (GPL-2+) applies.
+This is a heavily modified version of the original GeoMeTree by the
+authors given above.  The same license (GPL-2+) applies.
 
-This program is free software; you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation; either version
-2 of the License, or (at your option) any later version. This program is distributed in the hope
-that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-Public License for more details."""
-    print(text % (os.path.basename(sys.argv[0]), VERSION));
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2 of the License, or (at your
+option) any later version. This program is distributed in the hope that
+it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
+the GNU General Public License for more details."""
+    print(text % (os.path.basename(sys.argv[0]), VERSION))
     sys.exit(0)
 
 def parse_options():
@@ -50,26 +51,12 @@ def parse_options():
     parser.add_option("--version", dest="version", help="Print version information", action="store_true", default=False)
     parser.add_option("-f", "--file", dest="infile", help="Name of input file", default=None)
 
-    # group=OptionGroup(parser,"Tree length options")
-    # group.add_option("-n", "--norm", dest="normalize",help="Normalize the branch length vectors to norm 1 (default: no normalization)",action="store_true",default=False)
-    # group.add_option("-t", "--term",dest="term",help="Ignore branch lengths of terminal splits (then also ignored in normalization, default: terminal branch lengths considered)",action="store_false",default=True)
-    # parser.add_option_group(group)
-
     group=OptionGroup(parser,"Algorithmic options (pick one)")
-    group.add_option("-b","--branch",dest="branch",help="Compute the branch score",action="store_true",default=False)
-    group.add_option("-c","--cone",dest="cone",help="Compute the cone distance",action="store_true",default=False)
-    group.add_option("-s", "--symmetric",dest="symmetric",help="Compute the symmetric distance",action="store_true",default=False)
-    # group.add_option("-o","--opt",dest="opt",action="store_false",default=True,help=SUPPRESS_HELP) #help="Turn off optimization (default: with optimization)"
-    # group.add_option("-g","--graph",dest="graph",help=SUPPRESS_HELP,action="store_false",default=True) #help="Turn off evaluation of complete graph (default: on)"
-    # group.add_option("-a","--approx",dest="approx",help="Compute only the approximations, not geodesic path",action="store_true",default=False)
-    # group.add_option("-d","--decomp",dest="decomp",help="Do not decompose the trees (default: decomposition when possible)",action="store_false",default=True)
+    group.add_option("-b", "--branch", dest="branch", help="Compute the branch score", action="store_true", default=False)
+    group.add_option("-c", "--cone", dest="cone", help="Compute the cone distance", action="store_true", default=False)
+    group.add_option("-s", "--symmetric", dest="symmetric", help="Compute the symmetric distance", action="store_true", default=False)
+    group.add_option("-g", "--geodesic", dest="geodesic", help="Compute the geodesic distance", action="store_true", default=False)
     parser.add_option_group(group)
-
-    # group=OptionGroup(parser,"Output options")
-    # group.add_option("-m","--name",dest="outfile",default="None",help=SUPPRESS_HELP)#,help="Name of tabular output file, if 0: {file}.dist, default None"
-    # group.add_option("-s","--silent",dest="silent",help=SUPPRESS_HELP,action="store_true",default=False) #no pair file
-    # group.add_option("-v","--prefix",dest="prefix",help="Prefix name of output file(s) (default: 'pair', then files pair_i_j are generated for each pair)",default="pair")
-    # parser.add_option_group(group)
 
     (options, args) = parser.parse_args()
 
@@ -84,7 +71,6 @@ def parse_options():
             parser.print_help()
             sys.exit(1)
 
-    # if options.approx:options.graph=False #suppresses output for graph
         
     return options
 
@@ -94,7 +80,7 @@ def parse_options():
 # Methods for parsing newick trees
 #================================================================================#  
 
-def get_splits(newick_string,term=False): #if term: append also terminal splits and branch lengths    
+def get_splits(newick_string,term=True): #if term: append also terminal splits and branch lengths    
     return splits_for_tree(parse_newick(newick_string),term)
 
 def get_splits_with_decomposition(newick1,newick2,term=False): #if term: append also terminal splits and branch lengths
@@ -186,7 +172,7 @@ def geodesic(adj,bl1,bl2,neg,todo): #returns the last orthant
     def next_sub(str,i): return [x for (pos,x) in zip(list(range(len(str))), str) if (2**pos) & i] #enumerate all 2**str subsets by binary numbers
 
     #set class variables
-    Orthant.opt=opts.opt
+    Orthant.opt=True
     Orthant.dim1=len(bl1)
     Orthant.dim2=len(bl2)
     Orthant.adj=adj
@@ -230,13 +216,8 @@ def geodesic(adj,bl1,bl2,neg,todo): #returns the last orthant
                 
             else:
                 succ=newedge.compute_s(bl1,bl2,oldorth)
-                if not succ:continue
-                if opts.graph:oldorth.edges.append(newedge)
-                else: 
-                    oldedge=oldorth.edges[0]
-                    maxsk=max(newedge.s,oldedge.s)
-                    distdiff=sum(one_path(newedge).distance(bl1,bl2))-sum(one_path(oldedge).distance(bl1,bl2))
-                    if distdiff<0: oldorth.edges=[newedge]
+                if not succ: continue
+                oldorth.edges.append(newedge)
                     
     lastedge=IEdge(0,0,0,0,anc=Orthant.OrthList[max_i],s=1)
     best_path(lastedge)
@@ -251,375 +232,117 @@ def geodesic(adj,bl1,bl2,neg,todo): #returns the last orthant
 #================================================================================#  
 
 
-def distance(tree1,tree2,outfile):
-    global opts
-
-    def permutation_indices(data): 
-        return sorted(list(range(len(data))), key = data.__getitem__)
-
-    def branch_score(diff1,diff2,shared1=[],shared2=[]):
-        shared=[shared1[i]-shared2[i] for i in range(0,len(shared1))]
-        return norm(diff1+diff2+shared)
-
-    def cone(diff1,diff2,shared1=[],shared2=[]):
-        sharednorm=snorm([shared1[i]-shared2[i] for i in range(0,len(shared1))])
-        return math.sqrt((norm(diff1)+norm(diff2))**2+sharednorm)
+def distance(tree1,tree2):
 
     def combine(diff,shared,splits1,bl1,dstart,dend): #combine branch length lists so that indicees correspond to splits
         shared_branch=[bl1[splits1.index(s)] for s in shared]
         diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
         return diff_branch,shared_branch
-        
+
     def create_shared_equ(branch1,branch2):
         equs=[]
         for i in range(0,len(branch1)):
             equs.append([0,branch2[i]-branch1[i],branch1[i]])
         return equs
-    
-    def inverse(mat):return [[mat[i][j] for i in range(0,len(mat))] for j in range(0,len(mat[0]))]
+
+    def inverse(mat):
+        return [[mat[i][j] for i in range(0,len(mat))] for j in range(0,len(mat[0]))]
 
     #================================================================================#  
 
-    outstring=""
-    
-    if opts.decomp:
-        taxad,split_decomp=get_splits_with_decomposition(tree1,tree2,opts.term)
-        if len(split_decomp)==1:
-            prefix=False
-            spp=split_decomp[0][0][2]
-        else:
-            prefix=True
-            spp=get_splits(tree1,opts.term)[2]
-    else:
-        split_decomp=[[list(get_splits(tree1,opts.term)),list(get_splits(tree2,opts.term))]]
-        prefix=False
-        spp=split_decomp[0][0][2]
-        
-    all_equs=[]
-    dec=1 #number of decomposition
-
-    if outfile:
-        outfile.write("Output of GeoMeTree " + VERSION + "\n\n")
-        outfile.write("2 Trees of %u taxa given:\n"%spp)
-        outfile.write("T1=%s\nT2=%s\n" %(tree1,tree2))
-        if opts.normalize:outfile.write("\nTree vectors have been normalized to norm 1 !!!\n")
-        if prefix:
-            outfile.write("\nTrees have been decomposed at common splits, the following dummy taxa are used:\n")
-            for t in sorted(taxad.keys()):
-                outfile.write("%s\t%s\n" %(t,"*".join(taxad[t])))
-
-    if opts.normalize:
-        for j in [0,1]: #first and second tree
-            bl=[]
-            for s in split_decomp:
-                bl+=s[j][1]
-            n=norm(bl)
-            for s in split_decomp:
-                s[j][1]=[x/n for x in s[j][1]]
-
-    s_dic={} #saves geodesic path in transition times and Left and Right sets
-    bl_dic1={} #saves branch length of splits in case of multiple decompositions
-    bl_dic2={}
-    len_list=["cone","bs","geod","coneall","bsall","geodall"]
-    split_list=["shared","diff1","diff2","dim"]
-    len_dic={}.fromkeys(len_list) #save length and splits to compute overall numbers in the end
-    for l in list(len_dic.keys()):
-        len_dic[l]=[0]
-    split_dic={}.fromkeys(split_list,0)
-    graph=1
-    compl_time=0
-
+    split_decomp=[[list(get_splits(tree1)),list(get_splits(tree2))]]
     for t1,t2 in split_decomp:
-        splits1,bl1,spp1=t1
-        splits2,bl2,spp2=t2
-        new_s_dic={}
-        
-        # =============================================================================== #
-        # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
- 
-        diff_splits,adj,dim1,dim2=get_split_representation(splits1,splits2)
-    
-        shared_splits=list(set(splits1).intersection(set(splits2)))
-        shared_splits.sort()
-        c=len(shared_splits)
-        overlap=set(splits1).intersection(splits2)
+        pass; # TODO: what are t1 and t2?
+
+    splits1,bl1,spp1=t1
+    splits2,bl2,spp2=t2
+
+    # =============================================================================== #
+    # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
+
+    diff_splits,adj,dim1,dim2=get_split_representation(splits1,splits2)
+
+    shared_splits=list(set(splits1).intersection(set(splits2)))
+    shared_splits.sort()
+
+    # =============================================================================== #
+    # combine branch length lists so that indices correspond to splits
+
+    branch1_diff,branch1_shared=combine(diff_splits,shared_splits,splits1,bl1,0,dim1)
+    branch2_diff,branch2_shared=combine(diff_splits,shared_splits,splits2,bl2,dim1,dim1+dim2)
+
+    if not (dim1 or dim2):
+        equ_r = []
+        equ_l = []
+        dl = dist_for_geod(equ_r+create_shared_equ(branch1_shared,branch2_shared),equ_l)
+        return sum(dl)
+
+    # =============================================================================== #
+    # find splits that are compatible to all others
+
+    l_ind=[]
+    #There may be some splits in the first tree that are compatible to all splits in the second tree -> they have to end at 1
+    for i in range(0,dim1):
+        if adj[i]==[True]*dim2: # all()?
+            l_ind.append(i)
+    comp_equ_l=[[1,-branch1_diff[i],branch1_diff[i]] for i in l_ind]
+    neg=set(range(0,dim1)).difference(set(l_ind))  #neg is the starting neg for the geodesic algorithm, in case of full compatibilities, some are excluded
+
+    r_ind=[]
+    #vice versa
+    for j in range(0,dim2):
+        comp=True
+        for i in range(0,dim1):
+            if not adj[i][j]:
+                comp=False
+                break
+        if comp: r_ind.append(j)
+    comp_equ_r=[[0,branch2_diff[i],0] for i in r_ind]
+    todo=set(range(0,dim2)).difference(set(r_ind))        
+
+    # =============================================================================== #
+    # geodesic distance algorithm if still something todo
+
+    equ_l=[]
+    equ_r=[]
+    if len(todo)>0: #it may be that all were compatible bec of polytomies
 
         # =============================================================================== #
-        # combine branch length lists so that indices correspond to splits
-        
-        branch1_diff,branch1_shared=combine(diff_splits,shared_splits,splits1,bl1,0,dim1)
-        branch2_diff,branch2_shared=combine(diff_splits,shared_splits,splits2,bl2,dim1,dim1+dim2)
-    
-        # =============================================================================== #
-        # output
+        # todo should be the smaller set since algorithm is exponential in len(todo)
+        swap=(len(neg)<len(todo))
+        if swap:
+            adj=inverse(adj)
+            branch1_diff,branch2_diff=branch2_diff,branch1_diff
+            neg,todo=todo,neg
 
-        outstring+="%u\t%u\t%u\t%u\t"%(spp1,len(overlap),len(branch1_diff),len(branch2_diff))
-        split_dic["shared"]+=len(overlap)
-        split_dic["diff1"]+=len(branch1_diff)
-        split_dic["diff2"]+=len(branch2_diff)
- 
-        if outfile:
-            outfile.write("\n%s\n"%('-'*80))
-            if prefix:
-                outfile.write ("\nResults for Decomposition No. %u:\n" %dec)
+        try:
+            path,count=geodesic(adj,branch1_diff,branch2_diff,neg,todo)
+        except OverflowError:
+            err("Too many splits in actual decomposition to compute the geodesic distance exactly:", Orthant.dim2)
 
-            outfile.write("\nSplits only in T1:\n")
-            for i in range(0,dim1):
-                splt=shorter_split(diff_splits[i])
-                if prefix:outfile.write("%u/"%dec)
-                outfile.write("%u\t%s\t%1.6f\n" %(i+1,splt,branch1_diff[i]))
+        equ_l,equ_r= path.equations(branch1_diff,branch2_diff) #the assignment to first and second tree is not correct, but changes nothing for distance computation!!!
 
-            outfile.write("\nSplits only in T2:\n")
-            for i in range(0,dim2):
-                splt=shorter_split(diff_splits[dim1+i])
-                if prefix:outfile.write("%u/"%dec)
-                outfile.write("%u\t%s\t%1.6f\n" %(i+dim1+1,splt,branch2_diff[i]))    
+    equ_l += comp_equ_l
+    equ_r += comp_equ_r
 
-            outfile.write("\nSplits common to both trees and branch length in T1 and T2:\n")
-            for i in range (0,c):
-                splt=shorter_split(shared_splits[i])
-                if prefix:outfile.write("%u/"%dec)
-                outfile.write("%u\t%s\t%1.6f\t%1.6f\n" %(i+dim1+dim2+1,splt,branch1_shared[i],branch2_shared[i]))
-                
-        # =============================================================================== #
-        # fill bl_dics
-        if prefix:
-            for i in range(0,dim1):
-                bl_dic1["%u/%u"%(dec,i+1)]=branch1_diff[i]
-                bl_dic2["%u/%u"%(dec,i+1)]=0
-            for i in range(0,dim2):
-                bl_dic1["%u/%u"%(dec,dim1+i+1)]=0
-                bl_dic2["%u/%u"%(dec,dim1+i+1)]=branch2_diff[i]
-            for i in range (0,c):
-                bl_dic1["%u/%u"%(dec,dim1+dim2+i+1)]=branch1_shared[i]
-                bl_dic2["%u/%u"%(dec,dim1+dim2+i+1)]=branch2_shared[i]
-        else:
-            for i in range(0,dim1):
-                bl_dic1[str(i+1)]=branch1_diff[i]
-                bl_dic2[str(i+1)]=0
-            for i in range(0,dim2):
-                bl_dic1[str(dim1+i+1)]=0
-                bl_dic2[str(dim1+i+1)]=branch2_diff[i]
-            for i in range (0,c):
-                bl_dic1[str(dim1+dim2+i+1)]=branch1_shared[i]
-                bl_dic2[str(dim1+dim2+i+1)]=branch2_shared[i]
-            
-                
-        # =============================================================================== #
-        # there are different splits
-    
-        if dim1 or dim2:
-            # =============================================================================== #
-            # compute bounds          
-            
-            bs=branch_score(branch1_diff,branch2_diff) #lower bound
-            ub=cone(branch1_diff,branch2_diff) #upper bound
-            len_dic["cone"].append(ub)
-            len_dic["bs"].append(bs)
-            if opts.approx: #do not compute geodesic path
-                if outfile:
-                    outfile.write("\nResults for the different splits:\n")
-                    outfile.write("Branch score %1.6f\nCone distance %1.6f\n" %(bs,ub))
-                outstring += "0\t%1.6f\t%1.6f\t0\t" %(bs,ub)
-                count=0
-                timeg=0
-            else:
-          
-                # =============================================================================== #
-                # find splits that are compatible to all others
+    # =============================================================================== #
+    # Compute the distances for all splits and output them
 
-                l_ind=[]
-                #There may be some splits in the first tree that are compatible to all splits in the second tree -> they have to end at 1
-                for i in range(0,dim1):
-                    if adj[i]==[True]*dim2:l_ind.append(i)
-                comp_equ_l=[[1,-branch1_diff[i],branch1_diff[i]] for i in l_ind]
-                neg=set(range(0,dim1)).difference(set(l_ind))  #neg is the starting neg for the geodesic algorithm, in case of full compatibilities, some are excluded
+    dist_compl=dist_for_geod(equ_r+create_shared_equ(branch1_shared,branch2_shared),equ_l)
 
-                r_ind=[]
-                #vice versa
-                for j in range(0,dim2):
-                    comp=True
-                    for i in range(0,dim1):
-                        if not adj[i][j]:
-                            comp=False
-                            break
-                    if comp:r_ind.append(j)
-                comp_equ_r=[[0,branch2_diff[i],0] for i in r_ind]
-                todo=set(range(0,dim2)).difference(set(r_ind))        
-        
-                # =============================================================================== #
-                # geodesic distance algorithm if still something todo
-
-                t0=time.clock()
-                if len(todo)>0: #it may be that all were compatible bec of polytomies
-
-                    # =============================================================================== #
-                    # todo should be the smaller set since algorithm is exponential in len(todo)
-                    swap=(len(neg)<len(todo))
-                    if swap:
-                        adj=inverse(adj)
-                        branch1_diff,branch2_diff=branch2_diff,branch1_diff
-                        neg,todo=todo,neg
-                    
-                    outstring+="%u\t" %len(todo)
-                    split_dic["dim"]+=len(todo)
-
-                    try:
-                        path,count=geodesic(adj,branch1_diff,branch2_diff,neg,todo)
-                    except OverflowError:
-                        print("To many splits in actual decomposition to compute the geodesic distance exactly:", Orthant.dim2)
-                        print("Start the computation with option '-a' to compute the approximations")
-                        continue
-                    
-                    t1=time.clock()
-               
-                    equ_l,equ_r= path.equations(branch1_diff,branch2_diff) #the assignment to first and second tree is not correct, but changes nothing for distance computation!!!
-                    if swap:
-                        branch1_diff,branch2_diff=branch2_diff,branch1_diff
-                        path.inverse()
-            
-                else:
-                    equ_l=[]
-                    equ_r=[]
-                    count=1
-                    path=None
-                    t1=t0
-                    outstring+="0\t"
-
-                # =============================================================================== #
-                # Get the actual L, R and s and save in s_dic
-                
-                if path:
-                    L = path.get_L();L=[[i+1 for i in l] for l in L]
-                    R = path.get_R();R=[[i+dim1+1 for i in r] for r in R]
-                    s = path.get_s()
-                else:
-                    L=[[],[]]
-                    R=[[],[]]
-                    s=[0,1]
-                if r_ind: R[0]+=[i+dim1+1 for i in r_ind]
-                if l_ind: L[-1]+=[i+1 for i in l_ind]    
-                if prefix:
-                    L=[["%u/%u"%(dec,i) for i in l] for l in L]
-                    R=[["%u/%u"%(dec,i) for i in r] for r in R]
- 
-                for i in range(0,len(s)):
-                   new_s_dic[s[i]]=[L[i],R[i]]
-
-
-                # =============================================================================== #
-                # Compute the distances for different splits and output them
-
-                equ_l+=comp_equ_l
-                equ_r+=comp_equ_r
-
-                dist=dist_for_geod(equ_r,equ_l)
-                timeg=t1-t0
-                outstring+="%1.6f\t%1.6f\t%1.6f\t"%(bs,ub,sum(dist))
-
-                    
-                if outfile:
-                    outfile.write("\nThe geodesic path:\n")
-                    outfile.write(path_to_str(s,L,R))
-                    if prefix:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2,dec))
-                    else:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2))
-                    outfile.write("\nResults for the different splits:\n")
-                    outfile.write("Branch score %1.6f\nGeodesic distance %1.6f\nCone distance %1.6f\n" %(bs,sum(dist),ub))
-                    
-                len_dic["geod"].append(sum(dist))
-            
-        # =================================================================================== #
-        # There are no different splits
-        
-        else:
-            timeg=0
-            equ_r=[];equ_l=[];count=1 #count is number of geodesic paths
-            outstring+="0\t"*4
-            new_s_dic[0]=[[],[]]
-            new_s_dic[1]=[[],[]]
-            if outfile:
-                outfile.write("\nThe geodesic path:\nThere are no different splits, it equals the branch score.\n")
-                if prefix:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2,dec))
-                else:outfile.write("\nTransition points:\n%s\n"%trans_points(new_s_dic,bl_dic1,bl_dic2)) 
-
-        # =============================================================================== #
-        # Compute the distances for all splits and output them
-        
-        bs_compl=branch_score(branch1_diff,branch2_diff,branch1_shared,branch2_shared)
-        cone_compl=cone(branch1_diff,branch2_diff,branch1_shared,branch2_shared)
-        len_dic["coneall"].append(cone_compl)
-        len_dic["bsall"].append(bs_compl)
-        
-        if opts.approx:
-            outstring+="%1.6f\t%1.6f\t0\t0\t"%(bs_compl,cone_compl)
-            if outfile:
-                outfile.write("\nResults for all splits:\n")
-                outfile.write("Branch score %1.6f\nCone distance %1.6f\n" %(bs_compl,cone_compl))
-
-        else:
-            dist_compl=dist_for_geod(equ_r+create_shared_equ(branch1_shared,branch2_shared),equ_l)
-            outstring+="%1.6f\t%1.6f\t%1.6f\t%1.6f\t"%(bs_compl,cone_compl,sum(dist_compl),timeg)
-            if opts.graph: outstring+="%u\t"%count
-        
-            if outfile:
-                outfile.write("\nResults for all splits:\n")
-                outfile.write("Branch score %1.6f\nGeodesic distance %1.6f\nCone distance %1.6f\n" %(bs_compl,sum(dist_compl),cone_compl))
-                if opts.graph: outfile.write("\nComplete graph enumerated: %u path(s) found!\n" %count)
-                outfile.write("\nComputation time for geodesic path: %1.4f s\n"%(timeg))
-
-            len_dic["geodall"].append(sum(dist_compl))
-
-
-        for s in list(new_s_dic.keys()):
-            if s in s_dic:
-                s_dic[s][0]+=new_s_dic[s][0]
-                s_dic[s][1]+=new_s_dic[s][1]
-            else: s_dic[s]=new_s_dic[s]
-  
-        compl_time+=timeg
-        if opts.graph:graph*=count
-        dec+=1
-
-    #===============================================================================#
-    #output in case of decompositions
-
-    if prefix:
-        for i in list(len_dic.keys()):
-            len_dic[i]=norm(len_dic[i])
-        outstring2=("%u\t"*5+"%1.6f\t"*7) %(spp,split_dic["shared"],split_dic["diff1"],split_dic["diff2"],split_dic["dim"],len_dic["bs"],len_dic["cone"],len_dic["geod"],len_dic["bsall"],len_dic["coneall"],len_dic["geodall"],compl_time)
-        if opts.graph:outstring2+="%u\t"%graph
-        outstring=outstring2+outstring
-        
-        if outfile:
-            outfile.write("\n%s\n"%('-'*80))
-            if not opts.approx:
-                outfile.write("\nThe complete geodesic path:\n%s"%path_to_str(s_dic))
-                outfile.write("\nTransition points:\n%s"%trans_points(s_dic,bl_dic1,bl_dic2))
-            else:outfile.write("\nComplete results:\n")
-            outfile.write("\nResults for the different splits:\n")
-            outfile.write("Branch score %1.6f\n"%len_dic["bs"])
-            if not opts.approx:outfile.write("Geodesic distance %1.6f\n"%len_dic["geod"])
-            outfile.write("Decomposed cone distance %1.6f\n" %len_dic["cone"])
-            outfile.write("\nResults for all splits:\n")
-            outfile.write("Branch score %1.6f\n"%len_dic["bsall"])
-            if not opts.approx:outfile.write("Geodesic distance %1.6f\n"%len_dic["geodall"])
-            outfile.write("Decomposed cone distance %1.6f\n" %len_dic["coneall"])
-            if opts.graph: outfile.write("\nComplete graphs enumerated: with independent decompositions %u path(s) found!\n" %graph)
-            if not opts.approx:outfile.write("\nComputation time for all geodesic paths: %1.4f s\n"%(compl_time))
-    return outstring
+    d = sum(dist_compl)
+    return d
 
 
 def full_cone(tree1,tree2):
-    global opts
-
     def combine(diff,shared,splits1,bl1,dstart,dend):
         #combine branch length lists so that indicees correspond to splits
         shared_branch=[bl1[splits1.index(s)] for s in shared]
         diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
         return diff_branch,shared_branch
 
-    splits1,bl1,spp1=list(get_splits(tree1, True))
-    splits2,bl2,spp2=list(get_splits(tree2, True))
+    splits1,bl1,spp1=list(get_splits(tree1))
+    splits2,bl2,spp2=list(get_splits(tree2))
 
     # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
 
@@ -638,16 +361,14 @@ def full_cone(tree1,tree2):
 
 
 def branch(tree1,tree2):
-    global opts
-
     def combine(diff,shared,splits1,bl1,dstart,dend):
         #combine branch length lists so that indicees correspond to splits
         shared_branch=[bl1[splits1.index(s)] for s in shared]
         diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
         return diff_branch,shared_branch
 
-    splits1,bl1,spp1=list(get_splits(tree1, True))
-    splits2,bl2,spp2=list(get_splits(tree2, True))
+    splits1,bl1,spp1=list(get_splits(tree1))
+    splits2,bl2,spp2=list(get_splits(tree2))
 
     # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
 
@@ -665,15 +386,13 @@ def branch(tree1,tree2):
     return norm(diff1+diff2+shared)
 
 def symmetric(tree1,tree2):
-    global opts
-
-    splits1,bl1,spp1=list(get_splits(tree1, True))
-    splits2,bl2,spp2=list(get_splits(tree2, True))
+    splits1,bl1,spp1=list(get_splits(tree1))
+    splits2,bl2,spp2=list(get_splits(tree2))
 
     # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
 
     diff_splits,adj,dim1,dim2=get_split_representation(splits1,splits2)
-    return len(diff_splits);
+    return len(diff_splits)
 
 
 #===============================================================================#
@@ -694,21 +413,27 @@ def main():
         trees = trees[0:2]
 
     if opts.cone:
-        d=full_cone(trees[0],trees[1]);
+        d=full_cone(trees[0],trees[1])
         print(d)
         sys.exit(0)
 
     if opts.branch:
         # unrooted
-        d=branch(trees[0],trees[1]);
+        d=branch(trees[0],trees[1])
         print(d)
         sys.exit(0)
 
     if opts.symmetric:
         # unrooted
-        d=symmetric(trees[0],trees[1]);
+        d=symmetric(trees[0],trees[1])
         print(d)
         sys.exit(0)
+
+    if opts.geodesic:
+        d=distance(trees[0],trees[1])
+        print(d)
+        sys.exit(0)
+
 
     err("unknown call")
     
