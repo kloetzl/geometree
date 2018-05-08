@@ -83,26 +83,6 @@ def parse_options():
 def get_splits(newick_string,term=True): #if term: append also terminal splits and branch lengths    
     return splits_for_tree(parse_newick(newick_string),term)
 
-def get_splits_with_decomposition(newick1,newick2,term=False): #if term: append also terminal splits and branch lengths
-    global opts
-
-    root1=parse_newick(newick1)
-    root2=parse_newick(newick2)
-
-
-    taxad,decomp=root1.decomposition(root2) #returns taxa-dictionary of dummy taxa and decompositions as pairs of root nodes
-
-    all_splits=[] #stores pairs of subtrees to be compared
-
-    for droot1,droot2 in decomp:
-        act_splits=[]
-
-        for droot in droot1,droot2:
-            act_splits.append(list(splits_for_tree(droot,term)))
-        all_splits.append(act_splits)
-                
-    return taxad,all_splits
-
 def get_split_representation(splits1,splits2): #extract splits only in one tree and compute adjacency matrix
     
     def is_compatible(s1,s2):
