@@ -385,24 +385,24 @@ def main():
 
     if options.cone:
         d=full_cone(trees[0],trees[1])
-        print(d)
+        print('{:1.4e}'.format(d))
         sys.exit(0)
 
     if options.branch:
         # unrooted
         d=branch(trees[0],trees[1])
-        print(d)
+        print('{:1.4e}'.format(d))
         sys.exit(0)
 
     if options.symmetric:
         # unrooted
         d=symmetric(trees[0],trees[1])
-        print(d)
+        print('{:d}'.format(d))
         sys.exit(0)
 
     if options.geodesic:
         d=distance(trees[0],trees[1])
-        print(d)
+        print('{:1.4e}'.format(d))
         sys.exit(0)
 
 
