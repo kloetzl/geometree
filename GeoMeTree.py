@@ -12,7 +12,6 @@ from copy import *
 import math
 import os
 import sys
-import time
 
 def warnx(*args, **kwargs):
     sys.stderr.write("%s: " % os.path.basename(sys.argv[0]))
@@ -43,37 +42,6 @@ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
 the GNU General Public License for more details."""
     print(text % (os.path.basename(sys.argv[0]), VERSION))
     sys.exit(0)
-
-def parse_options():
-
-    from optparse import OptionParser, OptionGroup, SUPPRESS_HELP
-    parser = OptionParser()
-    parser.add_option("--version", dest="version", help="Print version information", action="store_true", default=False)
-    parser.add_option("-f", "--file", dest="infile", help="Name of input file", default=None)
-
-    group=OptionGroup(parser,"Algorithmic options (pick one)")
-    group.add_option("-b", "--branch", dest="branch", help="Compute the branch score", action="store_true", default=False)
-    group.add_option("-c", "--cone", dest="cone", help="Compute the cone distance", action="store_true", default=False)
-    group.add_option("-s", "--symmetric", dest="symmetric", help="Compute the symmetric distance", action="store_true", default=False)
-    group.add_option("-g", "--geodesic", dest="geodesic", help="Compute the geodesic distance", action="store_true", default=False)
-    parser.add_option_group(group)
-
-    (options, args) = parser.parse_args()
-
-    if options.version:
-        version()
-
-    if not options.infile:
-        if not sys.stdin.isatty():
-            options.infile = "-"
-        else:
-            warnx("Name of infile required")
-            parser.print_help()
-            sys.exit(1)
-
-        
-    return options
-
 
 
 #================================================================================#  
@@ -120,7 +88,6 @@ def get_split_representation(splits1,splits2): #extract splits only in one tree 
 #================================================================================#  
 
 def geodesic(adj,bl1,bl2,neg,todo): #returns the last orthant
-    global opts
 
     def cone(diff1,diff2,shared1=[],shared2=[]):
         sharednorm=snorm([shared1[i]-shared2[i] for i in range(0,len(shared1))])
@@ -372,13 +339,42 @@ def symmetric(tree1,tree2):
 
 #===============================================================================#
 
+
 def main():
-    global opts
-    opts=parse_options()
-    if opts.infile != "-":
-        trees = open(opts.infile).readlines()
-    else:
-        trees = sys.stdin.readlines()
+
+    def readfile(file_name):
+        if file_name == "-":
+            return sys.stdin.readlines()
+        else:
+            return open(file_name).readlines()
+
+    from argparse import ArgumentParser
+    parser = ArgumentParser(description="Compute distances between trees")
+    parser.add_argument("--version", dest="version", help="print version information", action="store_true", default=False)
+    parser.add_argument('files', nargs='*', help="file with newick trees") # argparse.REMAINDER
+
+    parser.add_argument("-b", "--branch", dest="branch", help="compute the branch score", action="store_true", default=False)
+    parser.add_argument("-c", "--cone", dest="cone", help="compute the cone distance", action="store_true", default=False)
+    parser.add_argument("-g", "--geodesic", dest="geodesic", help="compute the geodesic distance", action="store_true", default=False)
+    parser.add_argument("-s", "--symmetric", dest="symmetric", help="compute the symmetric distance", action="store_true", default=False)
+
+    options = parser.parse_args()
+
+    if options.version:
+        version()
+
+    files = options.files
+    if len(files) == 0:
+        if not sys.stdin.isatty():
+            # read from pipe
+            files = ["-"]
+        else:
+            warnx("No file name given")
+            parser.print_help()
+            sys.exit(1)
+
+    tmp = [readfile(fn) for fn in files]
+    trees = sum(tmp, []) # flatten
 
     if len(trees) < 2:
         err("less than two trees given")
@@ -387,30 +383,30 @@ def main():
         warnx("limiting computation to first two trees")
         trees = trees[0:2]
 
-    if opts.cone:
+    if options.cone:
         d=full_cone(trees[0],trees[1])
         print(d)
         sys.exit(0)
 
-    if opts.branch:
+    if options.branch:
         # unrooted
         d=branch(trees[0],trees[1])
         print(d)
         sys.exit(0)
 
-    if opts.symmetric:
+    if options.symmetric:
         # unrooted
         d=symmetric(trees[0],trees[1])
         print(d)
         sys.exit(0)
 
-    if opts.geodesic:
+    if options.geodesic:
         d=distance(trees[0],trees[1])
         print(d)
         sys.exit(0)
 
 
-    err("unknown call")
+    err("No distance method chosen")
     
 if __name__ == "__main__":
     main()
