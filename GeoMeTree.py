@@ -22,7 +22,7 @@ def err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     sys.exit(1)
 
-VERSION="v1.1.fk1"
+VERSION="v1.41.0"
 
 def version():
     text="""%s %s
