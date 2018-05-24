@@ -353,10 +353,11 @@ def main():
     parser.add_argument("--version", dest="version", help="print version information", action="store_true", default=False)
     parser.add_argument('files', nargs='*', help="file with newick trees") # argparse.REMAINDER
 
-    parser.add_argument("-b", "--branch", dest="branch", help="compute the branch score", action="store_true", default=False)
-    parser.add_argument("-c", "--cone", dest="cone", help="compute the cone distance", action="store_true", default=False)
-    parser.add_argument("-g", "--geodesic", dest="geodesic", help="compute the geodesic distance", action="store_true", default=False)
-    parser.add_argument("-s", "--symmetric", dest="symmetric", help="compute the symmetric distance", action="store_true", default=False)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-b", "--branch", dest="branch", help="compute the branch score", action="store_true", default=False)
+    group.add_argument("-c", "--cone", dest="cone", help="compute the cone distance", action="store_true", default=False)
+    group.add_argument("-g", "--geodesic", dest="geodesic", help="compute the geodesic distance", action="store_true", default=False)
+    group.add_argument("-s", "--symmetric", dest="symmetric", help="compute the symmetric distance", action="store_true", default=False)
 
     options = parser.parse_args()
 
