@@ -9,7 +9,7 @@ This particular version (1.41) is a fork from Kupczok et al (see below). It has 
 
 GeoMeTree takes as input a file containing two trees in Newick format. It then outputs one number based on the selected distance.
 
-    $ ./GeoMeTree.py --file examples/two.trees --branch
+    $ ./geometree --file examples/two.trees --branch
     1.174734012447073
 
 To see the available options use `--help`.
