@@ -337,6 +337,46 @@ def symmetric(tree1,tree2):
     return len(diff_splits)
 
 
+def correlation(tree1,tree2):
+    def combine(diff,shared,splits1,bl1,dstart,dend):
+        #combine branch length lists so that indices correspond to splits
+        shared_branch=[bl1[splits1.index(s)] for s in shared]
+        diff_branch=[bl1[splits1.index(diff[i])] for i in range (dstart,dend)]
+        return diff_branch,shared_branch
+    splits1,bl1,spp1=list(get_splits(tree1))
+    splits2,bl2,spp2=list(get_splits(tree2))
+
+    # creates set S (diff_splits), compatibility matrix (adj), C (shared_splits) and corresponding numbers
+    diff_splits,adj,dim1,dim2=get_split_representation(splits1,splits2)
+
+    shared_splits=list(set(splits1).intersection(set(splits2)))
+    shared_splits.sort()
+
+    # combine branch length lists so that indices correspond to splits
+
+    diff1,shared1=combine(diff_splits,shared_splits,splits1,bl1,0,dim1)
+    diff2,shared2=combine(diff_splits,shared_splits,splits2,bl2,dim1,dim1+dim2)
+
+    mean1 = sum(shared1)/len(shared1);
+    mean2 = sum(shared2)/len(shared2);
+
+    dshared1 = [shared1[i] - mean1 for i in range(0, len(shared1))]
+    dshared2 = [shared2[i] - mean2 for i in range(0, len(shared2))]
+
+    numerator = sum([dshared1[i] * dshared2[i] for i in range(0,  len(shared1))])
+
+    squared1 = [dshared1[i] * dshared1[i] for i in range(0, len(shared1))]
+    squared2 = [dshared2[i] * dshared2[i] for i in range(0, len(shared2))]
+    foo1 = sum(squared1)
+    foo2 = sum(squared2)
+
+    # print(shared_splits)
+    # print(shared1)
+    # print(shared2)
+
+    return numerator / math.sqrt(foo1 * foo2)
+
+
 #===============================================================================#
 
 
@@ -358,6 +398,7 @@ def main():
     group.add_argument("-c", "--cone", dest="cone", help="compute the cone distance", action="store_true", default=False)
     group.add_argument("-g", "--geodesic", dest="geodesic", help="compute the geodesic distance", action="store_true", default=False)
     group.add_argument("-s", "--symmetric", dest="symmetric", help="compute the symmetric distance", action="store_true", default=False)
+    group.add_argument("--correlation", dest="correlation", help="compute the correlation", action="store_true", default=False)
 
     options = parser.parse_args()
 
@@ -406,6 +447,10 @@ def main():
         print('{:1.4e}'.format(d))
         sys.exit(0)
 
+    if options.correlation:
+        d=correlation(trees[0],trees[1])
+        print('{:1.4e}'.format(d))
+        sys.exit(0)
 
     err("No distance method chosen")
     
